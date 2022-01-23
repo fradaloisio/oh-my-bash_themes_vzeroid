@@ -4,7 +4,7 @@ SCM_THEME_PROMPT_SUFFIX=""
 
 SCM_THEME_PROMPT_DIRTY=" ${bold_red}✗${normal}"
 SCM_THEME_PROMPT_CLEAN=" ${green}✓${normal}"
-SCM_GIT_CHAR="${green}±${normal}"
+SCM_GIT_CHAR=" ${green}±${normal}"
 SCM_SVN_CHAR="${bold_cyan}⑆${normal}"
 SCM_HG_CHAR="${bold_red}☿${normal}"
 
@@ -14,8 +14,23 @@ scm_prompt() {
         then 
             return
         else 
-            echo "[$(scm_char)$(scm_prompt_info)]"
+            echo "$(scm_char)$(scm_prompt_info)"
     fi 
+}
+
+K_PS1_ENABLED=off
+
+kon() {
+    K_PS1_ENABLED=on
+}
+koff() {
+    K_PS1_ENABLED=off
+}
+
+k_prompt(){
+    if [[ "${K_PS1_ENABLED}" == "on" ]]; then
+        echo " ${bold_red}$(kubectl config current-context)${normal}:${bold_cyan}$(kubectl config view --minify --output 'jsonpath={..namespace}')${normal} "
+    fi
 }
 
 v_prompt() {
@@ -23,11 +38,8 @@ v_prompt() {
     ps_user="${green}\u${normal}";
     ps_user_mark="${green} $ ${normal}";
     ps_path="${yellow}\w${normal}";
-    KUBE_PS1_PREFIX="["
-    KUBE_PS1_SUFFIX="]"
-    KUBE_PS1_SYMBOL_ENABLE="false"
 
-    PS1="\[$(clock_prompt)\] $(kube_ps1)$(scm_prompt):$ps_path$ps_user_mark"
+    PS1="$(clock_prompt)$(k_prompt)$(scm_prompt):$ps_path$ps_user_mark"
 }
 
 safe_append_prompt_command v_prompt
