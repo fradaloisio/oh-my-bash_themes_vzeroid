@@ -1,45 +1,41 @@
-# scm theming
-SCM_THEME_PROMPT_PREFIX=""
-SCM_THEME_PROMPT_SUFFIX=""
-
-SCM_THEME_PROMPT_DIRTY=" ${bold_red}✗${normal}"
-SCM_THEME_PROMPT_CLEAN=" ${green}✓${normal}"
-SCM_GIT_CHAR=" ${green}±${normal}"
-SCM_SVN_CHAR="${bold_cyan}⑆${normal}"
-SCM_HG_CHAR="${bold_red}☿${normal}"
-
-scm_prompt() {
-    CHAR=$(scm_char) 
-    if [ $CHAR = $SCM_NONE_CHAR ] 
-        then 
-            return
-        else 
-            echo "$(scm_char)$(scm_prompt_info)"
-    fi 
-}
-
 K_PS1_ENABLED=off
 
 kon() {
     K_PS1_ENABLED=on
+    kubectl config current-context &> /dev/null
+    if [[ $? -eq 1 ]]; then
+        kubectl config set current-context `cat ~/.kubectl_current_context` &> /dev/null
+    fi
 }
 koff() {
     K_PS1_ENABLED=off
+    kubectl config current-context > ~/.kubectl_current_context
+    kubectl config unset current-context &> /dev/null
 }
 
 k_prompt(){
     if [[ "${K_PS1_ENABLED}" == "on" ]]; then
-        echo " ${bold_red}$(kubectl config current-context)${normal}:${bold_cyan}$(kubectl config view --minify --output 'jsonpath={..namespace}')${normal} "
+        echo ' %{$fg[cyan]%}$(kubectl config current-context)%{$reset_color%}:%{$fg[green]%}$(kubectl config view --minify --output "jsonpath={..namespace}")%{$reset_color%}'
     fi
 }
-
-v_prompt() {
-    ps_host="${bold_blue}\h${normal}";
-    ps_user="${green}\u${normal}";
-    ps_user_mark="${green} $ ${normal}";
-    ps_path="${yellow}\w${normal}";
-
-    PS1="$(clock_prompt)$(k_prompt)$(scm_prompt):$ps_path$ps_user_mark"
+k_prompt_ctx(){
+    if [[ "${K_PS1_ENABLED}" == "on" ]]; then
+        echo " $(kubectl config current-context)"
+    fi
 }
+k_prompt_ns(){
+    if [[ "${K_PS1_ENABLED}" == "on" ]]; then
+        echo "$(kubectl config view --minify --output 'jsonpath={..namespace}')"
+    fi
+}
+k_prompt_separator(){
+    if [[ "${K_PS1_ENABLED}" == "on" ]]; then
+        echo ":"
+    fi
+}
+PROMPT='%D{%H:%M:%S} %(!.%{$fg[red]%}.%{$fg[yellow]%})%~%{$reset_color%}%{$fg_bold[red]%}$(k_prompt_ctx)%{$reset_color%}$(k_prompt_separator)%{$fg_bold[cyan]%}$(k_prompt_ns)%{$reset_color%}$(git_prompt_info)%{$reset_color%} $ '
 
-safe_append_prompt_command v_prompt
+ZSH_THEME_GIT_PROMPT_PREFIX=" %{$fg_bold[blue]%}("
+ZSH_THEME_GIT_PROMPT_SUFFIX="%{$fg_bold[blue]%})"
+ZSH_THEME_GIT_PROMPT_DIRTY=" %{$fg[red]%}✗"
+ZSH_THEME_GIT_PROMPT_CLEAN=" %{$fg[green]%}✔"
